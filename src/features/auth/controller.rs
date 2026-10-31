@@ -39,7 +39,7 @@ pub async fn signup(Json(mut input): Json<SignupRequest>) -> Result<&'static str
     // PASSWORD LENGTH VALIDATION 
     if !(15..=128).contains(&input.password.chars().count()) {
         return Err((
-            StatusCode,
+            StatusCode::BAD_REQUEST,
             "Password must contain between 15 and 128 characters"
         ));
     }
