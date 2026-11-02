@@ -3,7 +3,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL,
     name TEXT NOT NULL,
-    password TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
     profile_pic TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 

@@ -1,5 +1,8 @@
 use axum::{Json, http::StatusCode};
-use super::dto::SignupRequest;
+use super::{
+    dto::{ SignupRequest, UserResponse},
+    service,
+};
 
 // SIGN UP CONTROLLER 
 pub async fn signup(Json(mut input): Json<SignupRequest>) -> Result<&'static str, (StatusCode, &'static str)> {
@@ -44,7 +47,14 @@ pub async fn signup(Json(mut input): Json<SignupRequest>) -> Result<&'static str
         ));
     }
  
-    Ok("Sign up validation passed")
+    match service::create_user().await {
+        Ok(Some(user)) => Ok((StatusCode::CREATED, Json(user))),
+        Ok(None) => Err(StatusCode::CONFLICT, "email already exist"),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "count not create account"
+        )),
+    }
 }
 
 

@@ -1,4 +1,4 @@
 pub mod routes;
 mod controller;
 mod dto;
-// pub mod service;
+pub mod service;
