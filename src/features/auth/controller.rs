@@ -1,11 +1,16 @@
-use axum::{Json, http::StatusCode};
+
+use axum::{Json, http::StatusCode, extract::State};
 use super::{
     dto::{ SignupRequest, UserResponse},
     service,
 };
+use sqlx::PgPool;
 
 // SIGN UP CONTROLLER 
-pub async fn signup(Json(mut input): Json<SignupRequest>) -> Result<&'static str, (StatusCode, &'static str)> {
+pub async fn signup(
+    State(pool): State<PgPool>,
+    Json(mut input
+    ): Json<SignupRequest>) -> Result<(StatusCode, Json<UserResponse>), (StatusCode, &'static str)> {
     input.name = input.name.trim().to_string();
     input.email = input.email.trim().to_lowercase();
 
@@ -47,9 +52,9 @@ pub async fn signup(Json(mut input): Json<SignupRequest>) -> Result<&'static str
         ));
     }
  
-    match service::create_user().await {
+    match service::create_user(&pool, input).await {
         Ok(Some(user)) => Ok((StatusCode::CREATED, Json(user))),
-        Ok(None) => Err(StatusCode::CONFLICT, "email already exist"),
+        Ok(None) => Err((StatusCode::CONFLICT, "email already exist")),
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             "count not create account"
