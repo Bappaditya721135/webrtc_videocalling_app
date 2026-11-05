@@ -1,7 +1,7 @@
 
 use axum::{Json, http::StatusCode, extract::State};
 use super::{
-    dto::{ SignupRequest, UserResponse},
+    dto::{ SignupRequest, SignInRequest, UserResponse},
     service,
 };
 use sqlx::PgPool;
@@ -66,6 +66,21 @@ pub async fn signup(
 // SIGN IN CONTROLLER 
 
 
-pub async fn signin() -> &'static str {
-    "hello from sign in"
+pub async fn signin(
+    State(pool): State<PgPool>,
+    Json(mut input): Json<SignInRequest>
+) ->  Result<&'static str, (StatusCode, &'static str)> {
+    input.email = input.email.trim().to_lowercase();
+    input.password = input.password.trim().to_string();
+
+    // CHECK EMAIL LENGTH 
+    if !(3..=254).contains(&input.email.chars().count()) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Email must contain between 3 and 254 characters"
+        ));
+
+    }
+
+    Ok("yo from sign up")
 }
