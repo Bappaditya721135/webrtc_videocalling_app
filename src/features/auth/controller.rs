@@ -69,7 +69,7 @@ pub async fn signup(
 pub async fn signin(
     State(pool): State<PgPool>,
     Json(mut input): Json<SignInRequest>
-) ->  Result<&'static str, (StatusCode, &'static str)> {
+) ->  Result<(StatusCode, Json<UserResponse>), (StatusCode, &'static str)> {
     input.email = input.email.trim().to_lowercase();
     input.password = input.password.trim().to_string();
 
@@ -82,5 +82,32 @@ pub async fn signin(
 
     }
 
-    Ok("yo from sign up")
+
+    // CHECK IF VALID EMAIL 
+    let valid_email = match input.email.split_once('@') {
+        Some((local, domain)) => {
+            !local.is_empty() && !domain.is_empty() && !domain.contains('@') && !input.email.chars().any(char::is_whitespace)
+        }
+        None => false,
+    };
+
+    if !valid_email {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Please provide a valid email"
+        ));
+    }
+
+    match service::sign_in_user(&pool, input).await {
+        Ok(Some(user)) => Ok((StatusCode::OK, Json(user))),
+        Ok(None) => Err((
+            StatusCode::UNAUTHORIZED,
+            "Invalid email or password"
+        )),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "could not sign in"
+        )),
+    }
+
 }

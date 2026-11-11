@@ -6,21 +6,23 @@ use uuid::Uuid;
 use tracing::info;
 
 use sqlx::PgPool;
-use super::dto::{SignupRequest, UserResponse};
+use super::dto::{SignupRequest, UserResponse, SignInRequest};
 
 
-pub enum SignupError {
+pub enum AuthError {
+    EmailAlreadyExists,
+    InvalidCredentials,
     PasswordHash,
     Database(sqlx::Error),
 }
 
 
-pub async fn create_user(_pool: &PgPool, input: SignupRequest) -> Result<Option<UserResponse>, SignupError> {
+pub async fn create_user(_pool: &PgPool, input: SignupRequest) -> Result<Option<UserResponse>, AuthError> {
     let salt = SaltString::generate(&mut OsRng);
 
     let password_hash = Argon2::default()
         .hash_password(input.password.as_bytes(), &salt)
-        .map_err(|_| SignupError::PasswordHash)?
+        .map_err(|_| AuthError::PasswordHash)?
         .to_string();
 
 
@@ -29,6 +31,18 @@ pub async fn create_user(_pool: &PgPool, input: SignupRequest) -> Result<Option<
         name: input.name,
         email: input.email,
         profile_pic: input.profile_pic
+    };
+
+    Ok(Some(dummy_response))
+}
+
+
+pub async fn sign_in_user(pool: &PgPool, input: SignInRequest) -> Result<Option<UserResponse>, AuthError> {
+    let dummy_response: UserResponse = UserResponse {
+        id: Uuid::new_v4(),
+        name: "test".to_string(),
+        email: "test@gmail.com".to_string(),
+        profile_pic: None
     };
 
     Ok(Some(dummy_response))
