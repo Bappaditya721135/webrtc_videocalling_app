@@ -71,7 +71,6 @@ pub async fn signin(
     Json(mut input): Json<SignInRequest>
 ) ->  Result<(StatusCode, Json<UserResponse>), (StatusCode, &'static str)> {
     input.email = input.email.trim().to_lowercase();
-    input.password = input.password.trim().to_string();
 
     // CHECK EMAIL LENGTH 
     if !(3..=254).contains(&input.email.chars().count()) {
