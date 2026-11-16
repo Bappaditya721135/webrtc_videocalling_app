@@ -45,7 +45,7 @@ pub async fn signup(
     }
 
     // PASSWORD LENGTH VALIDATION 
-    if !(15..=128).contains(&input.password.chars().count()) {
+    if !(8..=128).contains(&input.password.chars().count()) {
         return Err((
             StatusCode::BAD_REQUEST,
             "Password must contain between 15 and 128 characters"
@@ -103,10 +103,13 @@ pub async fn signin(
             StatusCode::UNAUTHORIZED,
             "Invalid email or password"
         )),
-        Err(_) => Err((
+        Err(error) => {
+            eprintln!("sign in failed: {error:?}");
+            Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             "could not sign in"
-        )),
+        ))
+        },
     }
 
 }

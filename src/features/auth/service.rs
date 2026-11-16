@@ -10,6 +10,7 @@ use tracing::info;
 use sqlx::PgPool;
 use super::dto::{SignupRequest, UserResponse, SignInRequest};
 
+#[derive(Debug)]
 #[derive(sqlx::FromRow)]
 struct UserWithPassword {
     id: uuid::Uuid,
@@ -19,7 +20,7 @@ struct UserWithPassword {
     profile_pic: Option<String>,
 }
 
-
+#[derive(Debug)]
 pub enum AuthError {
     EmailAlreadyExists,
     InvalidCredentials,
@@ -36,13 +37,6 @@ pub async fn create_user(pool: &PgPool, input: SignupRequest) -> Result<Option<U
         .map_err(|_| AuthError::PasswordHash)?
         .to_string();
 
-
-    // let dummy_response: UserResponse = UserResponse {
-    //     id: Uuid::new_v4(),
-    //     name: input.name,
-    //     email: input.email,
-    //     profile_pic: input.profile_pic
-    // };
 
     let user = sqlx::query_as::<_,UserResponse>(
         r#"
@@ -65,6 +59,9 @@ pub async fn create_user(pool: &PgPool, input: SignupRequest) -> Result<Option<U
 
 
 pub async fn sign_in_user(pool: &PgPool, input: SignInRequest) -> Result<Option<UserResponse>, AuthError> {
+
+    println!("email: {:?}", input.email);
+    println!("password: {:?}",input.password);
     let user = sqlx::query_as::<_, UserWithPassword>(
         r#"
         SELECT id, name, password_hash, profile_pic FROM users WHERE email = &1
@@ -75,6 +72,7 @@ pub async fn sign_in_user(pool: &PgPool, input: SignInRequest) -> Result<Option<
     .await
     .map_err(AuthError::Database)?;
 
+    println!("user: {:?}", user);
 
     let Some(user) = user else {
         return Ok(None);

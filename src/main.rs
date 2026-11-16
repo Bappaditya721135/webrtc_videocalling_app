@@ -15,9 +15,12 @@ async fn main() -> Result<(), Box<dyn Error>>{
                 .connect(&database_url)
                 .await?;
     let app = http::router(pool);
-    let listener = TcpListener::bind("127.0.0.1:3000").await?;
+    let port = std::env::var("PORT")
+                .unwrap_or_else(|_| "3000".to_string())
+                .parse::<u16>()?;
+    let listener = TcpListener::bind(format!("127.0.0.1:{port}")).await?;
 
-    println!("server is running on http://localhost:3000");
+    println!("server is running on http://localhost:{port}");
 
     axum::serve(listener, app).await?;
 
