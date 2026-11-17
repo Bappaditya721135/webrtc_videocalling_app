@@ -60,11 +60,9 @@ pub async fn create_user(pool: &PgPool, input: SignupRequest) -> Result<Option<U
 
 pub async fn sign_in_user(pool: &PgPool, input: SignInRequest) -> Result<Option<UserResponse>, AuthError> {
 
-    println!("email: {:?}", input.email);
-    println!("password: {:?}",input.password);
     let user = sqlx::query_as::<_, UserWithPassword>(
         r#"
-        SELECT id, name, password_hash, profile_pic FROM users WHERE email = &1
+        SELECT id, name, email, password_hash, profile_pic FROM users WHERE email = $1
         "#
     )
     .bind(&input.email)
