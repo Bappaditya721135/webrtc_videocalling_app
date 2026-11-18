@@ -4,6 +4,10 @@ use argon2::{
     PasswordVerifier,
     PasswordHash,
 };
+use jsonwebtoken::{
+    encode, get_current_timestamp, Algorithm, EncodingKey, Header,
+};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use tracing::info;
 
@@ -26,6 +30,32 @@ pub enum AuthError {
     InvalidCredentials,
     PasswordHash,
     Database(sqlx::Error),
+}
+
+
+pub const ACCESS_TOKEN_TTL: u64 = 15 * 60;
+
+#[derive(Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub iat: u64,
+    pub exp: u64,
+}
+
+
+pub fn generate_access_token( user_id: Uuid, key: &EncodingKey) -> Result<String, jsonwebtoken::errors::Error> {
+    let now = get_current_timestamp();
+
+    let claims = Claims {
+        sub: user_id.to_string(),
+        iat: now,
+        exp: now + ACCESS_TOKEN_TTL,
+    };
+    encode(
+        &Header::new(Algorithm::HS256),
+        &claims,
+        key,
+    )
 }
 
 

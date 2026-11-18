@@ -29,3 +29,11 @@ pub struct UserResponse {
     pub email: String,
     pub profile_pic: Option<String>
 }
+
+#[derive(Serialize)]
+pub struct AuthResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: u64,
+    pub user: UserResponse,
+}

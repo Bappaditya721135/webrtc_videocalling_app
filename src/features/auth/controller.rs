@@ -1,7 +1,8 @@
 
-use axum::{Json, http::StatusCode, extract::State};
+use axum::{Json, http::StatusCode, extract::State, Extension};
+use jsonwebtoken::EncodingKey;
 use super::{
-    dto::{ SignupRequest, SignInRequest, UserResponse},
+    dto::{ SignupRequest, SignInRequest, UserResponse, AuthResponse},
     service,
 };
 use sqlx::PgPool;
@@ -9,8 +10,9 @@ use sqlx::PgPool;
 // SIGN UP CONTROLLER 
 pub async fn signup(
     State(pool): State<PgPool>,
+    Extension(jwt_key): Extension<EncodingKey>,
     Json(mut input
-    ): Json<SignupRequest>) -> Result<(StatusCode, Json<UserResponse>), (StatusCode, &'static str)> {
+    ): Json<SignupRequest>) -> Result<(StatusCode, Json<AuthResponse>), (StatusCode, &'static str)> {
     input.name = input.name.trim().to_string();
     input.email = input.email.trim().to_lowercase();
 
@@ -53,7 +55,20 @@ pub async fn signup(
     }
  
     match service::create_user(&pool, input).await {
-        Ok(Some(user)) => Ok((StatusCode::CREATED, Json(user))),
+        Ok(Some(user)) => {
+            let access_token = service::generate_access_token(user.id, &jwt_key)
+                .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Could not genrate access token"))?;
+            
+            Ok((
+                StatusCode::CREATED,
+                Json(AuthResponse {
+                    access_token,
+                    token_type: "Bearer".to_string(),
+                    expires_in: service::ACCESS_TOKEN_TTL,
+                    user,
+                })
+            ))
+        },
         Ok(None) => Err((StatusCode::CONFLICT, "email already exist")),
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
