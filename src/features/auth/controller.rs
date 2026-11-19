@@ -83,8 +83,9 @@ pub async fn signup(
 
 pub async fn signin(
     State(pool): State<PgPool>,
+    Extension(jwt_key): Extension<EncodingKey>,
     Json(mut input): Json<SignInRequest>
-) ->  Result<(StatusCode, Json<UserResponse>), (StatusCode, &'static str)> {
+) ->  Result<(StatusCode, Json<AuthResponse>), (StatusCode, &'static str)> {
     input.email = input.email.trim().to_lowercase();
 
     // CHECK EMAIL LENGTH 
@@ -113,7 +114,17 @@ pub async fn signin(
     }
 
     match service::sign_in_user(&pool, input).await {
-        Ok(Some(user)) => Ok((StatusCode::OK, Json(user))),
+        Ok(Some(user)) => {
+            let access_token = service::generate_access_token(user.id, &jwt_key)
+                                .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "count not generate access token"))?;
+
+            Ok((StatusCode::OK, Json(AuthResponse {
+                access_token,
+                token_type: "Bearer".to_string(),
+                expires_in: service::ACCESS_TOKEN_TTL,
+                user,
+            })))
+        },
         Ok(None) => Err((
             StatusCode::UNAUTHORIZED,
             "Invalid email or password"
