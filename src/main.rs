@@ -1,4 +1,5 @@
 mod http;
+mod middleware;
 mod features;
 use std::error::Error;
 use tokio::net::TcpListener;
