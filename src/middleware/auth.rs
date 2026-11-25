@@ -5,13 +5,14 @@ use axum::{
     response::Response,
 };
 
-pub async fn log_request(
+pub async fn require_auth (
     request: Request,
     next: Next,
 ) -> Response {
     let mut headers = request.headers().clone();
-    headers.remove(header::AUTHORIZATION);
+    // headers.remove(header::AUTHORIZATION);
 
+    println!("middleware is running");
     tracing::info!(
         method = %request.method(),
         uri = %request.uri(),

@@ -12,6 +12,11 @@ use jsonwebtoken::EncodingKey;
 async fn main() -> Result<(), Box<dyn Error>>{
 
     dotenvy::dotenv().ok();
+
+    tracing_subscriber::fmt()
+    .with_max_level(tracing::Level::INFO)
+    .init();
+
     let jwt_secret = std::env::var("JWT_SECRET")?;
     if jwt_secret.len() < 32 {
         return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "JWT_SECRET must contain at least 32 bytes",).into());
@@ -30,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error>>{
     let listener = TcpListener::bind(format!("127.0.0.1:{port}")).await?;
 
     println!("server is running on http://localhost:{port}");
-
+    
     axum::serve(listener, app).await?;
 
     Ok(())
